@@ -1,0 +1,44 @@
+{
+  "light": [
+    {
+      "name": "fruityvice-mcp",
+      "command": "node servers/fruityvice-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "math-mcp",
+      "command": "node servers/math-mcp/build/index.js"
+    },
+    {
+      "name": "call-for-papers-mcp",
+      "command": "node servers/call-for-papers-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "mcp-hn",
+      "command": "node servers/mcp-hn/stdio-adapter.mjs"
+    },
+    {
+      "name": "hugeicons-mcp-server",
+      "command": "node servers/hugeicons-mcp-server/build/index.js"
+    },
+    {
+      "name": "movie-recommender-mcp",
+      "command": "node servers/movie-recommender-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "time-mcp",
+      "command": "node servers/time-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "unit-converter-mcp",
+      "command": "node servers/unit-converter-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "okx-mcp",
+      "command": "node servers/okx-mcp/build/index.js"
+    },
+    {
+      "name": "wikipedia-mcp",
+      "command": "node servers/wikipedia-mcp/stdio-adapter.mjs"
+    }
+  ]
+}
