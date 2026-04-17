@@ -65,6 +65,8 @@ The benchmark heavy tier is:
   Clones and prepares the 10 benchmark heavy-tier servers.
 - `ec2/install-tiered.sh`
   Runs the light, medium, and heavy install flows together.
+- `ec2/adapters/`
+  Stores the benchmark-specific `stdio-adapter.mjs` files that do not exist in many upstream server repos. The install scripts now re-copy these after clone so a clean EC2 host gets the benchmark adapters automatically.
 - `ec2/bootstrap-light-host.sh`
   Installs system dependencies, builds the local runtime, and starts the service with PM2.
 - `ec2/bootstrap-medium-host.sh`

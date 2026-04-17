@@ -3,6 +3,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SERVERS_DIR="${REPO_ROOT}/servers"
+ADAPTERS_DIR="${REPO_ROOT}/ec2/adapters"
 
 mkdir -p "${SERVERS_DIR}"
 cd "${SERVERS_DIR}"
@@ -10,12 +11,36 @@ cd "${SERVERS_DIR}"
 clone_repo() {
   local name="$1"
   local url="$2"
+
+  if [ -d "${name}" ] && [ ! -d "${name}/.git" ]; then
+    if [ -z "$(find "${name}" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]; then
+      echo "INFO: ${name} is an empty placeholder; removing it before clone"
+      rmdir "${name}"
+    fi
+  fi
+
   if [ -d "${name}/.git" ] || [ -d "${name}" ]; then
     echo "INFO: ${name} already present; skipping clone"
+    sync_adapter "${name}"
     return
   fi
   echo "INFO: cloning ${name} from ${url}"
   git clone --depth 1 "${url}" "${name}"
+  sync_adapter "${name}"
+}
+
+sync_adapter() {
+  local name="$1"
+  local source_path="${ADAPTERS_DIR}/${name}/stdio-adapter.mjs"
+  local target_path="${SERVERS_DIR}/${name}/stdio-adapter.mjs"
+
+  if [ ! -f "${source_path}" ]; then
+    return
+  fi
+
+  cp "${source_path}" "${target_path}"
+  chmod +x "${target_path}"
+  echo "INFO: synced local stdio adapter for ${name}"
 }
 
 build_npm_repo() {
