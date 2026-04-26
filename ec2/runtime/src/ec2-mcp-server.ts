@@ -3,6 +3,7 @@ import { performance } from "node:perf_hooks";
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { freemem, loadavg, totalmem } from "node:os";
 
 import { StdioBridge } from "./stdio-bridge.js";
 
@@ -132,6 +133,33 @@ function splitCommand(command: string): { cmd: string; args: string[] } {
 
 function getRouteServerConfigs(routeKey: string): ServerConfig[] {
   return routeConfigs[normalizeRouteKey(routeKey)] ?? [];
+}
+
+function bytesToMb(bytes: number | null | undefined): number | null {
+  if (typeof bytes !== "number" || !Number.isFinite(bytes) || bytes < 0) {
+    return null;
+  }
+  return Math.round((bytes / 1024 / 1024) * 100) / 100;
+}
+
+function readLinuxRssBytes(pid: number | null): number | null {
+  if (!pid) {
+    return null;
+  }
+  try {
+    const status = readFileSync(`/proc/${pid}/status`, "utf8");
+    const match = /^VmRSS:\s+(\d+)\s+kB$/m.exec(status);
+    return match ? Number.parseInt(match[1], 10) * 1024 : null;
+  } catch {
+    return null;
+  }
+}
+
+function routeKeysForServer(serverName: string): string[] {
+  return Object.entries(routeConfigs)
+    .filter(([, configs]) => configs.some((config) => config.name === serverName))
+    .map(([routeKey]) => routeKey)
+    .sort();
 }
 
 function getBridge(serverName: string): StdioBridge {
@@ -372,6 +400,66 @@ fastify.get("/:route/health", async (request: any, reply: any) => {
     server_count: configs.length,
     servers: configs.map((item) => item.name),
   };
+});
+
+fastify.get("/metrics", async (_request, reply) => {
+  const runtimeMemory = process.memoryUsage();
+  const serverProcesses = allServerConfigs.map((config) => {
+    const bridge = bridges.get(config.name);
+    const processInfo = bridge?.getProcessInfo();
+    const rssBytes = readLinuxRssBytes(processInfo?.pid ?? null);
+    return {
+      name: config.name,
+      route_keys: routeKeysForServer(config.name),
+      command: config.command,
+      pid: processInfo?.pid ?? null,
+      alive: processInfo?.alive ?? false,
+      rss_bytes: rssBytes,
+      rss_mb: bytesToMb(rssBytes),
+    };
+  });
+  const totalChildRssBytes = serverProcesses.reduce(
+    (total, item) => total + (typeof item.rss_bytes === "number" ? item.rss_bytes : 0),
+    0,
+  );
+  const systemTotalBytes = totalmem();
+  const systemFreeBytes = freemem();
+  const systemUsedBytes = systemTotalBytes - systemFreeBytes;
+
+  return reply.header("Cache-Control", "no-store").send({
+    status: "ok",
+    instance: INSTANCE_ID,
+    timestamp: new Date().toISOString(),
+    runtime: {
+      pid: process.pid,
+      rss_bytes: runtimeMemory.rss,
+      rss_mb: bytesToMb(runtimeMemory.rss),
+      heap_total_bytes: runtimeMemory.heapTotal,
+      heap_total_mb: bytesToMb(runtimeMemory.heapTotal),
+      heap_used_bytes: runtimeMemory.heapUsed,
+      heap_used_mb: bytesToMb(runtimeMemory.heapUsed),
+      external_bytes: runtimeMemory.external,
+      external_mb: bytesToMb(runtimeMemory.external),
+      array_buffers_bytes: runtimeMemory.arrayBuffers,
+      array_buffers_mb: bytesToMb(runtimeMemory.arrayBuffers),
+    },
+    child_processes: {
+      count: serverProcesses.length,
+      alive_count: serverProcesses.filter((item) => item.alive).length,
+      total_rss_bytes: totalChildRssBytes,
+      total_rss_mb: bytesToMb(totalChildRssBytes),
+      servers: serverProcesses,
+    },
+    system: {
+      total_bytes: systemTotalBytes,
+      total_mb: bytesToMb(systemTotalBytes),
+      free_bytes: systemFreeBytes,
+      free_mb: bytesToMb(systemFreeBytes),
+      used_bytes: systemUsedBytes,
+      used_mb: bytesToMb(systemUsedBytes),
+      loadavg: loadavg(),
+    },
+  });
 });
 
 fastify.head("/mcp", async (request, reply) => handleMcp({ method: "HEAD", body: null, url: "/mcp" }, reply, "shared"));

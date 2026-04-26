@@ -17,6 +17,13 @@ export interface McpResponse {
   error?: { code: number; message: string };
 }
 
+export interface BridgeProcessInfo {
+  command: string;
+  args: string[];
+  pid: number | null;
+  alive: boolean;
+}
+
 export class StdioBridge {
   private child: ChildProcess | null = null;
   private buffer = "";
@@ -59,6 +66,15 @@ export class StdioBridge {
   kill(): void {
     this.invalidateBridge(new Error("Bridge killed"));
     this.initPromise = null;
+  }
+
+  getProcessInfo(): BridgeProcessInfo {
+    return {
+      command: this.command,
+      args: [...this.args],
+      pid: this.child?.pid ?? null,
+      alive: this.isChildAlive(),
+    };
   }
 
   private enqueue<T>(fn: () => Promise<T>): Promise<T> {

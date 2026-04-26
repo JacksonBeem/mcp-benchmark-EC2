@@ -42,6 +42,14 @@ export class StdioBridge {
         this.invalidateBridge(new Error("Bridge killed"));
         this.initPromise = null;
     }
+    getProcessInfo() {
+        return {
+            command: this.command,
+            args: [...this.args],
+            pid: this.child?.pid ?? null,
+            alive: this.isChildAlive(),
+        };
+    }
     enqueue(fn) {
         const next = this.serialQueue.then(fn, fn);
         this.serialQueue = next.then(() => undefined, () => undefined);
