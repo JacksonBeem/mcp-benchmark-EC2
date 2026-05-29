@@ -128,7 +128,7 @@ The tiered bootstrap is the one to use if you want all 30 benchmark servers on o
 Each bootstrap:
 
 1. Installs Node.js, Git, and Python if needed.
-2. Clones the MCP server repositories needed for that tier into `./servers`.
+2. Clones the MCP server repositories needed for that tier into `./servers` and checks out the pinned benchmark commits.
 3. Builds the local runtime in `ec2/runtime`.
 4. Starts the runtime with PM2.
 
@@ -142,14 +142,15 @@ The tiered bootstrap uses `ec2/tiered-route-config.json`, so one process can ans
 
 `Docker/Dockerfile` now builds the light-tier runtime instead of the old Python workload server. It expects a populated `servers/` directory in the build context.
 
-Example build from `c:\VScode`:
+Example build from this repository root:
 
 ```bash
-docker build -f Co-Work/mcp-benchmark-high/Docker/Dockerfile -t mcp-benchmark-light .
+docker build -f Docker/Dockerfile -t mcp-benchmark-light .
 ```
 
 ## Notes
 
 - The tier lists here intentionally mirror `mcp-benchmark`; that benchmark repo remains the source of truth for tier membership.
+- The install scripts pin each upstream server checkout to the same commits recorded by `mcp-benchmark`.
 - `context7` is the one medium-tier repo that needs a pnpm-based monorepo build; `ec2/install-medium.sh` handles that by running `pnpm run build:mcp`.
 - The old heavy benchmark response samples under `high_responses/` were left untouched because they may still be useful as historical data.
