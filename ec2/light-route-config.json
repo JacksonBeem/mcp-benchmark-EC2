@@ -1,44 +1,44 @@
 {
   "light": [
     {
-      "name": "unit-converter-mcp",
-      "command": "node servers/unit-converter-mcp/stdio-adapter.mjs"
-    },
-    {
-      "name": "medcalc",
-      "command": "node servers/medcalc/stdio-adapter.mjs"
-    },
-    {
-      "name": "scientific_computation_mcp",
-      "command": "node servers/scientific_computation_mcp/stdio-adapter.mjs"
-    },
-    {
       "name": "bibliomantic-mcp-server",
       "command": "node servers/bibliomantic-mcp-server/stdio-adapter.mjs"
-    },
-    {
-      "name": "time-mcp",
-      "command": "node servers/time-mcp/stdio-adapter.mjs"
-    },
-    {
-      "name": "weather_mcp",
-      "command": "node servers/weather_mcp/stdio-adapter.mjs"
     },
     {
       "name": "openapi-mcp-server",
       "command": "node servers/openapi-mcp-server/stdio-adapter.mjs"
     },
     {
-      "name": "movie-recommender-mcp",
-      "command": "node servers/movie-recommender-mcp/stdio-adapter.mjs"
+      "name": "time-mcp",
+      "command": "node servers/time-mcp/stdio-adapter.mjs"
     },
     {
-      "name": "arxiv-mcp-server",
-      "command": "node servers/arxiv-mcp-server/stdio-adapter.mjs"
+      "name": "call-for-papers-mcp",
+      "command": "node servers/call-for-papers-mcp/stdio-adapter.mjs"
     },
     {
       "name": "huggingface-mcp-server",
       "command": "node servers/huggingface-mcp-server/stdio-adapter.mjs"
+    },
+    {
+      "name": "unit-converter-mcp",
+      "command": "node servers/unit-converter-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "movie-recommender-mcp",
+      "command": "node servers/movie-recommender-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "medcalc",
+      "command": "node servers/medcalc/stdio-adapter.mjs"
+    },
+    {
+      "name": "mcp-osint-server",
+      "command": "node servers/mcp-osint-server/stdio-adapter.mjs"
+    },
+    {
+      "name": "math-mcp",
+      "command": "node servers/math-mcp/build/index.js"
     }
   ]
 }

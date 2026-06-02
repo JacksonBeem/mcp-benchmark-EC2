@@ -6,6 +6,14 @@ set -euo pipefail
 # package.json "packageManager") without the interactive Y/n prompt that would
 # otherwise hang a non-interactive / sudo build.
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+# pnpm 10/11 treats a dependency build script it won't auto-run (e.g. esbuild) as a
+# hard ERR_PNPM_IGNORED_BUILDS failure, and re-checks deps before `pnpm exec`/`run`,
+# which re-triggers it. We only need a tsc compile (esbuild ships prebuilt binaries),
+# so opt out in the user ~/.npmrc that pnpm actually reads (npm_config_* env vars and
+# project .npmrc are NOT honored for these pnpm-specific keys under corepack here).
+_NPMRC="${HOME:-/root}/.npmrc"
+grep -qs '^strict-dep-builds=' "$_NPMRC" || echo 'strict-dep-builds=false' >> "$_NPMRC"
+grep -qs '^verify-deps-before-run=' "$_NPMRC" || echo 'verify-deps-before-run=false' >> "$_NPMRC"
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SERVERS_DIR="${REPO_ROOT}/servers"
@@ -57,38 +65,56 @@ has_script() { node -e "const p=require('./package.json');process.exit(p.scripts
 build_repo() {
   local name="$1"
   [ -f "${name}/package.json" ] || { echo "INFO: no package.json for ${name}; skipping build"; return 0; }
+  # A build failure for ONE server must not abort the whole tier (mirrors install-poc.sh):
+  # run in a subshell with `set +e`, guard every step, and always `return 0`.
   (
-    cd "${name}"
+    set +e
+    cd "${name}" || exit 0
     if [ -f pnpm-workspace.yaml ]; then
-      # pnpm 10 aborts with ERR_PNPM_IGNORED_BUILDS for deps (e.g. esbuild) whose
-      # build scripts it won't run unprompted -- harmless for a tsc compile, so keep
-      # the install non-fatal; the build step below is the real gate.
-      npx pnpm install || echo "WARN: pnpm install reported ignored builds; continuing"
-      if [ "${name}" = "context7" ]; then npx pnpm --filter @upstash/context7-mcp exec tsc
-      elif has_script "build:stdio"; then npx pnpm run build:stdio
-      elif has_script "build"; then npx pnpm run build
+      # pnpm 10/11 aborts (ERR_PNPM_IGNORED_BUILDS) when a dependency build script
+      # (esbuild) isn't approved, and re-checks deps before exec/run -- re-triggering
+      # it. Approve esbuild via the workspace allow-list so the install exits 0.
+      # Appended only if absent; the force-checkout reverts pnpm-workspace.yaml each run.
+      grep -q 'onlyBuiltDependencies' pnpm-workspace.yaml || printf '\nonlyBuiltDependencies:\n  - esbuild\n' >> pnpm-workspace.yaml
+      npx pnpm install || echo "WARN: pnpm install issues for ${name}; continuing"
+      if [ "${name}" = "context7" ]; then
+        # @upstash/context7-mcp lives in packages/mcp and builds to packages/mcp/dist,
+        # but the route command runs servers/context7/dist/index.js -- expose via symlink.
+        npx pnpm --filter @upstash/context7-mcp exec tsc \
+          || ./node_modules/.bin/tsc -p packages/mcp/tsconfig.json \
+          || echo "WARN: context7 tsc failed"
+        chmod 755 packages/mcp/dist/index.js 2>/dev/null || true
+        ln -sfn packages/mcp/dist dist
+      elif has_script "build:stdio"; then npx pnpm run build:stdio || echo "WARN: build:stdio failed for ${name}"
+      elif has_script "build"; then npx pnpm run build || echo "WARN: build failed for ${name}"
       else echo "INFO: pnpm workspace ${name}, no build script"; fi
+    elif [ "${name}" = "metmuseum-mcp" ]; then
+      # `prebuild` runs `pnpm run lint:check`, which pulls a bun binary and hangs --
+      # skip all lifecycle scripts and compile straight to dist/.
+      npm install --ignore-scripts || echo "WARN: npm install failed for ${name}"
+      npx tsc || echo "WARN: tsc failed for ${name}"
     else
-      npm install
-      if has_script "build:stdio"; then npm run build:stdio
-      elif has_script "build"; then npm run build
+      npm install || echo "WARN: npm install failed for ${name}"
+      if has_script "build:stdio"; then npm run build:stdio || echo "WARN: build:stdio failed for ${name}"
+      elif has_script "build"; then npm run build || echo "WARN: build failed for ${name}"
       else echo "INFO: no build script for ${name}; using checked-in entrypoints"; fi
     fi
   )
+  return 0
 }
 
 
 # clone + checkout pinned commit (+ sync vendored adapter)
-clone_repo "mcp-osint-server" "https://github.com/himanshusanecha/mcp-osint-server" "e1767ad9a46a5090b0ba8a8372d01cee5fc93940"
-clone_repo "mcp-hn" "https://github.com/erithwik/mcp-hn" "a454f624e6b1171e0e3dbe0c9eafd2830565190f"
-clone_repo "biomcp" "https://github.com/genomoncology/biomcp" "c3c85f191f59f2d99ccbb32501b181feddf69f66"
-clone_repo "mcp-nixos" "https://github.com/utensils/mcp-nixos" "60c1efbba0de1268b42f1144c904e6c8a9627dde"
-clone_repo "game-trends-mcp" "https://github.com/halismertkir/game-trends-mcp" "d59917f3ce55c59a6e1680630938e3f08b6ced52"
-clone_repo "wikipedia-mcp" "https://github.com/Rudra-ravi/wikipedia-mcp" "14b33cd4f71ffb9426a054a11e00d12196e5082b"
-clone_repo "math-mcp" "https://github.com/EthanHenrickson/math-mcp" "6eed9eb6ef12e82fb0223f7c2f68df9b08f11e99"
+clone_repo "osm-mcp" "https://github.com/tpp6me/osm-mcp-server" "ea6a7f9f34e73edb60c1c163cb78d0dfc872f9bc"
+clone_repo "openfda-mcp" "https://github.com/Augmented-Nature/OpenFDA-MCP-Server" "bab2751a89cf385bcaf0a3cf6cb091004408d682"
+clone_repo "fruityvice-mcp" "https://github.com/CelalKhalilov/fruityvice-mcp" "abab3bac8bbe1cb06b854cd0caf0e68517568b81"
+clone_repo "metmuseum-mcp" "https://github.com/mikechao/metmuseum-mcp" "93808d59dfc1ae732268da1ec387bb0748c56d0c"
+clone_repo "hugeicons-mcp-server" "https://github.com/hugeicons/mcp-server" "6c691dd5f8ab90a7ea556b74a742dd22d0e55583"
 clone_repo "okx-mcp" "https://github.com/esshka/okx-mcp" "47a049125ca252487660d5f43752eed3829f47a7"
 clone_repo "car-price-mcp-main" "https://github.com/yusaaztrk/car-price-mcp-main" "8977a80e474af24e23d6f3b48df173ff8ef595cf"
-clone_repo "osm-mcp" "https://github.com/tpp6me/osm-mcp-server" "ea6a7f9f34e73edb60c1c163cb78d0dfc872f9bc"
+clone_repo "mcp-server-nationalparks" "https://github.com/KyrieTangSheng/mcp-server-nationalparks" "59d06755bb566f3f62eac39b3ad8bc51d25470bf"
+clone_repo "steam-mcp" "https://github.com/algorhythmic/steam-mcp" "ae9792b3695a3022204f7546c11f6d567a06b5ac"
+clone_repo "openalex-mcp" "https://github.com/oksure/openalex-research-mcp" "536ce32c82b447cdba4d675e6f64a7ab54c850df"
 
 # Ensure pnpm is on PATH for servers whose build lifecycle scripts call pnpm
 # directly. Prefer corepack (bundled with node): it installs the shim into
@@ -99,14 +125,14 @@ if ! command -v pnpm >/dev/null 2>&1; then
 fi
 
 # install node deps + build where a build script exists
-build_repo "mcp-osint-server"
-build_repo "mcp-hn"
-build_repo "biomcp"
-build_repo "mcp-nixos"
-build_repo "game-trends-mcp"
-build_repo "wikipedia-mcp"
-build_repo "math-mcp"
+build_repo "osm-mcp"
+build_repo "openfda-mcp"
+build_repo "fruityvice-mcp"
+build_repo "metmuseum-mcp"
+build_repo "hugeicons-mcp-server"
 build_repo "okx-mcp"
 build_repo "car-price-mcp-main"
-build_repo "osm-mcp"
+build_repo "mcp-server-nationalparks"
+build_repo "steam-mcp"
+build_repo "openalex-mcp"
 echo "INFO: medium server install complete"
