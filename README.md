@@ -57,6 +57,8 @@ The benchmark heavy tier is:
   Route definition for the benchmark heavy tier.
 - `ec2/tiered-route-config.json`
   Combined light/medium/heavy route definition for one EC2 host serving all 30 benchmark servers.
+- `ec2/all-in-one-route-config.json`
+  Single `shared` route definition exposing all 30 benchmark servers on one endpoint (`/mcp`). This is the "all-in-one" configuration (RQ1): every server is reachable through one undifferentiated route instead of being grouped by tier.
 - `ec2/install-light.sh`
   Clones and prepares the 10 benchmark light-tier servers on an EC2 host.
 - `ec2/install-medium.sh`
@@ -65,6 +67,8 @@ The benchmark heavy tier is:
   Clones and prepares the 10 benchmark heavy-tier servers.
 - `ec2/install-tiered.sh`
   Runs the light, medium, and heavy install flows together.
+- `ec2/install-all-in-one.sh`
+  Installs the full 30-server corpus by reusing `install-tiered.sh` (all-in-one and tiered share an identical server set; only the route layout differs).
 - `ec2/adapters/`
   Stores the benchmark-specific `stdio-adapter.mjs` files that do not exist in many upstream server repos. The install scripts now re-copy these after clone so a clean EC2 host gets the benchmark adapters automatically.
 - `ec2/bootstrap-light-host.sh`
@@ -75,6 +79,8 @@ The benchmark heavy tier is:
   Boots a heavy-only EC2 runtime on port `3000`.
 - `ec2/bootstrap-tiered-host.sh`
   Boots one EC2 runtime that exposes `/light`, `/medium`, and `/heavy` together on port `3000`.
+- `ec2/bootstrap-all-in-one-host.sh`
+  Boots one EC2 runtime that exposes all 30 servers on the single shared `/mcp` endpoint on port `3000`.
 - `ec2/ecosystem.config.cjs`
   PM2 app definition for the light runtime.
 - `ec2/ecosystem.medium.config.cjs`
@@ -83,6 +89,8 @@ The benchmark heavy tier is:
   PM2 app definition for the heavy runtime.
 - `ec2/ecosystem.tiered.config.cjs`
   PM2 app definition for the combined 30-server tiered runtime.
+- `ec2/ecosystem.all-in-one.config.cjs`
+  PM2 app definition for the 30-server all-in-one runtime (single shared route).
 - `ec2/runtime/`
   Node/Fastify MCP runtime that bridges streamable HTTP requests to the hosted stdio MCP servers.
 - `ec2_instances/server_high.py`
@@ -90,6 +98,10 @@ The benchmark heavy tier is:
 
 ## Runtime Endpoints
 
+- `http://127.0.0.1:3000/mcp`
+  All-in-one shared MCP endpoint exposing all 30 servers once the runtime is started with `ec2/all-in-one-route-config.json`.
+- `http://127.0.0.1:3000/health`
+  Health check for the shared (all-in-one) route.
 - `http://127.0.0.1:3000/light/mcp`
   Light-tier MCP endpoint.
 - `http://127.0.0.1:3000/light/health`
@@ -123,7 +135,13 @@ bash ec2/bootstrap-heavy-host.sh
 bash ec2/bootstrap-tiered-host.sh
 ```
 
+```bash
+bash ec2/bootstrap-all-in-one-host.sh
+```
+
 The tiered bootstrap is the one to use if you want all 30 benchmark servers on one EC2 box with route-based access under `/light`, `/medium`, and `/heavy`.
+
+The all-in-one bootstrap puts all 30 benchmark servers on one EC2 box behind a single shared route at `/mcp`. Use it for the benchmark's all-in-one configuration (RQ1), which compares one undifferentiated route against the tiered layout. It installs the same corpus as the tiered flow (via `install-tiered.sh`) and only swaps the route config + PM2 app.
 
 Each bootstrap:
 

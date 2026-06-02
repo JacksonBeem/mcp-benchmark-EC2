@@ -1,0 +1,124 @@
+{
+  "shared": [
+    {
+      "name": "bibliomantic-mcp-server",
+      "command": "node servers/bibliomantic-mcp-server/stdio-adapter.mjs"
+    },
+    {
+      "name": "calculator-mcp",
+      "command": "node servers/calculator-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "call-for-papers-mcp",
+      "command": "node servers/call-for-papers-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "car-price-mcp-main",
+      "command": "node servers/car-price-mcp-main/stdio-adapter.mjs"
+    },
+    {
+      "name": "context7",
+      "command": "node servers/context7/dist/index.js"
+    },
+    {
+      "name": "fruityvice-mcp",
+      "command": "node servers/fruityvice-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "hugeicons-mcp-server",
+      "command": "node servers/hugeicons-mcp-server/build/index.js"
+    },
+    {
+      "name": "huggingface-mcp-server",
+      "command": "node servers/huggingface-mcp-server/stdio-adapter.mjs"
+    },
+    {
+      "name": "ip-geolocation-mcp",
+      "command": "node servers/ip-geolocation-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "json-query-mcp",
+      "command": "node servers/json-query-mcp/dist/index.js"
+    },
+    {
+      "name": "math-mcp",
+      "command": "node servers/math-mcp/build/index.js"
+    },
+    {
+      "name": "mcp-dnd-5e",
+      "command": "node servers/mcp-dnd-5e/stdio-adapter.mjs"
+    },
+    {
+      "name": "mcp-osint-server",
+      "command": "node servers/mcp-osint-server/stdio-adapter.mjs"
+    },
+    {
+      "name": "mcp-server-nationalparks",
+      "command": "node servers/mcp-server-nationalparks/build/index.js"
+    },
+    {
+      "name": "mcp-starwars",
+      "command": "node servers/mcp-starwars/stdio-adapter.mjs"
+    },
+    {
+      "name": "medcalc",
+      "command": "node servers/medcalc/stdio-adapter.mjs"
+    },
+    {
+      "name": "metmuseum-mcp",
+      "command": "node servers/metmuseum-mcp/dist/index.js"
+    },
+    {
+      "name": "movie-recommender-mcp",
+      "command": "node servers/movie-recommender-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "okx-mcp",
+      "command": "node servers/okx-mcp/build/index.js"
+    },
+    {
+      "name": "open-meteo-mcp-server",
+      "command": "node servers/_cand_npm/node_modules/open-meteo-mcp-server/dist/index.js"
+    },
+    {
+      "name": "openalex-mcp",
+      "command": "node servers/openalex-mcp/build/index.js"
+    },
+    {
+      "name": "openapi-mcp-server",
+      "command": "node servers/openapi-mcp-server/stdio-adapter.mjs"
+    },
+    {
+      "name": "openfda-mcp",
+      "command": "node servers/openfda-mcp/build/index.js"
+    },
+    {
+      "name": "osm-mcp",
+      "command": "node servers/osm-mcp/index.js"
+    },
+    {
+      "name": "paper-search-mcp",
+      "command": "node servers/paper-search-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "pdf-reader-mcp",
+      "command": "node servers/_cand_npm/node_modules/@sylphx/pdf-reader-mcp/dist/index.js"
+    },
+    {
+      "name": "steam-mcp",
+      "command": "node servers/steam-mcp/build/index.js"
+    },
+    {
+      "name": "time-mcp",
+      "command": "node servers/time-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "unit-converter-mcp",
+      "command": "node servers/unit-converter-mcp/stdio-adapter.mjs"
+    },
+    {
+      "name": "whois-mcp",
+      "command": "node servers/_cand_npm/node_modules/@bharathvaj/whois-mcp/dist/index.js"
+    }
+  ]
+}
