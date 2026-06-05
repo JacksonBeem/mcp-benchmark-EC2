@@ -112,10 +112,9 @@ mkdir -p _cand_npm
 ( cd _cand_npm && npm install --no-audit --no-fund open-meteo-mcp-server@1.6.1 )
 ( cd _cand_npm && npm install --no-audit --no-fund @bharathvaj/whois-mcp@1.0.1 )
 ( cd _cand_npm && npm install --no-audit --no-fund mcp-ip-geolocator@1.0.0 )
-( cd _cand_npm && npm install --no-audit --no-fund @wrtnlabs/calculator-mcp@0.2.1 )
+( cd _cand_npm && npm install --no-audit --no-fund mcp-fetch-server )
 mkdir -p "mcp-starwars" && sync_adapter "mcp-starwars"
 mkdir -p "ip-geolocation-mcp" && sync_adapter "ip-geolocation-mcp"
-mkdir -p "calculator-mcp" && sync_adapter "calculator-mcp"
 
 # clone + checkout pinned commit (+ sync vendored adapter)
 clone_repo "bibliomantic-mcp-server" "https://github.com/d4nshields/bibliomantic-mcp-server" "759f4c478363f9a0825a6e6438829c0b65c12736"
